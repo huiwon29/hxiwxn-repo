@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>제목을 입력하세요</title>
+  <!-- 카톡 링크 미리보기 -->
+  <meta property="og:title" content="제목을 입력하세요" />
+  <meta property="og:description" content="설명을 입력하세요" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", sans-serif;
+      background: #f6f4ef;
+      color: #26221b;
+      display: flex;
+      justify-content: center;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      padding: 32px 24px 48px;
+    }
+
+    h1 {
+      font-size: 1.6rem;
+      line-height: 1.4;
+      text-align: center;
+      margin-bottom: 40px;
+      word-break: keep-all;
+    }
+
+    .buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .time-btn {
+      height: 60px;
+      border: none;
+      border-radius: 16px;
+      background: #ffffff;
+      color: #26221b;
+      font-size: 1.15rem;
+      font-weight: 600;
+      font-family: inherit;
+      box-shadow: 0 2px 8px rgba(38, 34, 27, 0.08);
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.2s ease, color 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .time-btn:active {
+      transform: scale(0.97);
+    }
+
+    .time-btn.correct {
+      background: #e8632c;
+      color: #ffffff;
+      animation: pop 0.45s ease;
+    }
+
+    @keyframes pop {
+      0%   { transform: scale(1); }
+      40%  { transform: scale(1.08); }
+      100% { transform: scale(1); }
+    }
+
+    /* 토스트 */
+    #toast {
+      position: fixed;
+      left: 50%;
+      bottom: 48px;
+      transform: translate(-50%, 20px);
+      max-width: calc(100% - 48px);
+      background: rgba(38, 34, 27, 0.92);
+      color: #fff;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      padding: 13px 22px;
+      border-radius: 999px;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, transform 0.25s ease;
+      text-align: center;
+      word-break: keep-all;
+    }
+
+    #toast.show {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+
+    /* 정답 축하 문구 */
+    #congrats {
+      position: fixed;
+      left: 50%;
+      top: 22%;
+      transform: translate(-50%, 0) scale(0.6);
+      font-size: 2rem;
+      font-weight: 800;
+      color: #e8632c;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
+      text-shadow: 0 2px 12px rgba(232, 99, 44, 0.25);
+      white-space: nowrap;
+    }
+
+    #congrats.show {
+      opacity: 1;
+      transform: translate(-50%, 0) scale(1);
+    }
+
+    /* 폭죽 캔버스 */
+    #confetti {
+      position: fixed;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1 id="title"></h1>
+    <div class="buttons">
+      <button class="time-btn" data-key="toast6">오후 6시</button>
+      <button class="time-btn" data-key="toast7">오후 7시</button>
+      <button class="time-btn" data-key="toast8">오후 8시</button>
+      <button class="time-btn" data-key="correct" id="answer-btn">오후 9시</button>
+    </div>
+  </div>
+
+  <canvas id="confetti"></canvas>
+  <div id="congrats"></div>
+  <div id="toast"></div>
+
+  <script>
+    // ===== 문구 설정: 여기만 수정하면 됩니다 =====
+    const TEXT = {
+      title:   "제목을 입력하세요",
+      toast6:  "오후 6시 토스트 메시지",
+      toast7:  "오후 7시 토스트 메시지",
+      toast8:  "오후 8시 토스트 메시지",
+      correct: "정답! 🎉",
+    };
+    // ============================================
+
+    document.getElementById("title").textContent = TEXT.title;
+
+    // --- 토스트 ---
+    const toast = document.getElementById("toast");
+    let toastTimer = null;
+
+    function showToast(message) {
+      toast.textContent = message;
+      toast.classList.remove("show");
+      void toast.offsetWidth; // 연타 시 애니메이션 재시작
+      toast.classList.add("show");
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.remove("show"), 2000);
+    }
+
+    // --- 폭죽 ---
+    const canvas = document.getElementById("confetti");
+    const ctx = canvas.getContext("2d");
+    const COLORS = ["#e8632c", "#f4b23e", "#4d9d6a", "#3d7bd9", "#d94f70", "#8a5cc9"];
+    let particles = [];
+    let animating = false;
+
+    function resizeCanvas() {
+      canvas.width = window.innerWidth * devicePixelRatio;
+      canvas.height = window.innerHeight * devicePixelRatio;
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+
+    function burst(x, y, count) {
+      for (let i = 0; i < count; i++) {
+        const angle = Math.random() * Math.PI * 2;
+        const speed = 5 + Math.random() * 9;
+        particles.push({
+          x, y,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed - 4,
+          size: 5 + Math.random() * 6,
+          color: COLORS[Math.floor(Math.random() * COLORS.length)],
+          rotation: Math.random() * Math.PI * 2,
+          spin: (Math.random() - 0.5) * 0.3,
+          life: 1,
+          decay: 0.008 + Math.random() * 0.008,
+        });
+      }
+    }
+
+    function tick() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      ctx.clearRect(0, 0, w, h);
+
+      particles = particles.filter(p => p.life > 0 && p.y < h + 30);
+      for (const p of particles) {
+        p.vy += 0.18;      // 중력
+        p.vx *= 0.985;     // 공기 저항
+        p.x += p.vx;
+        p.y += p.vy;
+        p.rotation += p.spin;
+        p.life -= p.decay;
+
+        ctx.save();
+        ctx.globalAlpha = Math.max(p.life, 0);
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.rotation);
+        ctx.fillStyle = p.color;
+        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
+        ctx.restore();
+      }
+
+      if (particles.length > 0) {
+        requestAnimationFrame(tick);
+      } else {
+        animating = false;
+        ctx.clearRect(0, 0, w, h);
+      }
+    }
+
+    function fireworks() {
+      const w = window.innerWidth;
+      const h = window.innerHeight;
+      burst(w / 2, h * 0.35, 90);
+      setTimeout(() => burst(w * 0.25, h * 0.3, 60), 220);
+      setTimeout(() => burst(w * 0.75, h * 0.3, 60), 420);
+      if (!animating) {
+        animating = true;
+        requestAnimationFrame(tick);
+      }
+    }
+
+    // --- 축하 문구 ---
+    const congrats = document.getElementById("congrats");
+    let congratsTimer = null;
+
+    function showCongrats() {
+      congrats.textContent = TEXT.correct;
+      congrats.classList.remove("show");
+      void congrats.offsetWidth;
+      congrats.classList.add("show");
+      clearTimeout(congratsTimer);
+      congratsTimer = setTimeout(() => congrats.classList.remove("show"), 2600);
+    }
+
+    // --- 버튼 동작 ---
+    document.querySelectorAll(".time-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const key = btn.dataset.key;
+        if (key === "correct") {
+          btn.classList.remove("correct");
+          void btn.offsetWidth;
+          btn.classList.add("correct");
+          fireworks();
+          showCongrats();
+        } else {
+          showToast(TEXT[key]);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
