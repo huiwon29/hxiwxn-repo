@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>제목을 입력하세요</title>
+  <title>오늘은 몇시에 퇴근할 것 같나요?</title>
   <!-- 카톡 링크 미리보기 -->
-  <meta property="og:title" content="제목을 입력하세요" />
-  <meta property="og:description" content="설명을 입력하세요" />
+  <meta property="og:title" content="오늘은 몇시에 퇴근할 것 같나요?" />
+  <meta property="og:description" content="버튼을 눌러 정답을 맞혀보세요!" />
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -102,25 +102,25 @@
       transform: translate(-50%, 0);
     }
 
-    /* 정답 축하 문구 */
+    /* 정답 축하 문구: 제목 위 전용 공간 */
     #congrats {
-      position: fixed;
-      left: 50%;
-      top: 22%;
-      transform: translate(-50%, 0) scale(0.6);
+      height: 3rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       font-size: 2rem;
       font-weight: 800;
       color: #e8632c;
       opacity: 0;
-      pointer-events: none;
+      transform: scale(0.6);
       transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
       text-shadow: 0 2px 12px rgba(232, 99, 44, 0.25);
-      white-space: nowrap;
+      margin-bottom: 12px;
     }
 
     #congrats.show {
       opacity: 1;
-      transform: translate(-50%, 0) scale(1);
+      transform: scale(1);
     }
 
     /* 폭죽 캔버스 */
@@ -135,6 +135,7 @@
 </head>
 <body>
   <div class="container">
+    <div id="congrats"></div>
     <h1 id="title"></h1>
     <div class="buttons">
       <button class="time-btn" data-key="toast6">오후 6시</button>
@@ -145,16 +146,15 @@
   </div>
 
   <canvas id="confetti"></canvas>
-  <div id="congrats"></div>
   <div id="toast"></div>
 
   <script>
     // ===== 문구 설정: 여기만 수정하면 됩니다 =====
     const TEXT = {
-      title:   "제목을 입력하세요",
-      toast6:  "오후 6시 토스트 메시지",
-      toast7:  "오후 7시 토스트 메시지",
-      toast8:  "오후 8시 토스트 메시지",
+      title:   "오늘은 몇시에 퇴근할 것 같나요?",
+      toast6:  "그 시간에 퇴근하기엔 너무 일러요. ㅠㅠ",
+      toast7:  "그 시간에 퇴근하기엔 너무 일러요. ㅠㅠ",
+      toast8:  "그 시간에 퇴근하기엔 너무 일러요. ㅠㅠ",
       correct: "정답! 🎉",
     };
     // ============================================
