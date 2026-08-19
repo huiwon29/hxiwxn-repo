@@ -297,9 +297,8 @@
         const n = modalStage.n;
         Progress.unlock(n);
         closeModal();
-        fireworks();
         showToast(TEXT.unlocked);
-        setTimeout(() => { location.href = "stage" + n + "/"; }, 1100);
+        setTimeout(() => { location.href = "stage" + n + "/"; }, 800);
       } else {
         modal.classList.remove("shake");
         void modal.offsetWidth;
