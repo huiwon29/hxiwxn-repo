@@ -131,7 +131,7 @@
     }
 
     function checkProgress() {
-      if (!revealed && scratchedRatio() >= 0.7) reveal();
+      if (!revealed && scratchedRatio() >= 1 / 3) reveal();
     }
 
     canvas.addEventListener("pointerdown", e => {
