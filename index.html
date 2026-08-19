@@ -323,6 +323,13 @@
     });
 
     renderList();
+
+    // 게임에서 "맵으로 돌아가기"로 돌아왔을 때 캐시된 화면이 그대로 복원되는 경우가 있어
+    // 페이지가 다시 보일 때마다 잠금/클리어 상태를 새로 그린다
+    window.addEventListener("pageshow", e => { if (e.persisted) renderList(); });
+    document.addEventListener("visibilitychange", () => {
+      if (document.visibilityState === "visible") renderList();
+    });
   </script>
 </body>
 </html>

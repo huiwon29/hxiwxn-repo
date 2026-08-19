@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>조기 퇴근 심사</title>
+  <title>조기 퇴근 요청하기</title>
   <link rel="stylesheet" href="../assets/common.css" />
   <style>
     .doc {
@@ -22,6 +22,46 @@
       border-bottom: 2px solid #f0ece3;
       word-break: keep-all;
     }
+
+    /* 신청서 양식 */
+    .field { margin-bottom: 18px; }
+    .field label {
+      display: block;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: #8a8375;
+      margin-bottom: 7px;
+    }
+    .field input,
+    .field textarea {
+      width: 100%;
+      border: 2px solid #e3ddd2;
+      border-radius: 12px;
+      font-size: 1rem;
+      font-family: inherit;
+      padding: 12px 14px;
+      outline: none;
+      background: #fdfcfa;
+      color: inherit;
+    }
+    .field input:focus,
+    .field textarea:focus { border-color: #e8632c; }
+    .field textarea {
+      min-height: 110px;
+      resize: none;
+      line-height: 1.5;
+    }
+    .char-count {
+      text-align: right;
+      font-size: 0.8rem;
+      color: #b3ac9d;
+      margin-top: 5px;
+      font-variant-numeric: tabular-nums;
+    }
+    .char-count.ok { color: #3c8659; font-weight: 700; }
+
+    /* 심사 화면 */
+    #review-view { display: none; }
     .bar-track {
       height: 18px;
       background: #f0ece3;
@@ -54,20 +94,37 @@
     }
     #status.fail { color: #c0392b; font-weight: 700; }
     #status.pass { color: #3c8659; font-weight: 700; }
-    #apply-btn { width: 100%; }
+    #action-btn { width: 100%; }
   </style>
 </head>
 <body>
   <div class="container">
     <div id="congrats"></div>
     <h1 id="title"></h1>
-    <div class="doc">
-      <div class="doc-title" id="doc-title"></div>
+
+    <!-- 신청서 작성 화면 -->
+    <div class="doc" id="form-view">
+      <div class="doc-title" id="form-title"></div>
+      <div class="field">
+        <label for="name-input" id="name-label"></label>
+        <input type="text" id="name-input" autocomplete="off" />
+      </div>
+      <div class="field">
+        <label for="reason-input" id="reason-label"></label>
+        <textarea id="reason-input"></textarea>
+        <div class="char-count" id="char-count"></div>
+      </div>
+    </div>
+
+    <!-- 심사 화면 -->
+    <div class="doc" id="review-view">
+      <div class="doc-title" id="review-title"></div>
       <div class="bar-track"><div id="bar"></div></div>
       <div id="percent">0%</div>
       <div id="status"></div>
     </div>
-    <button class="btn primary" id="apply-btn"></button>
+
+    <button class="btn primary" id="action-btn"></button>
   </div>
 
   <script src="../assets/config.js"></script>
@@ -78,31 +135,57 @@
 
     // ===== 문구 설정: 여기만 수정하면 됩니다 =====
     const TEXT = {
-      title:    "조기 퇴근 신청서를 제출해볼까요?",
-      docTitle: "📄 조기 퇴근 신청서 심사",
-      applyBtn: "신청하기",
-      retryBtn: "재신청하기",
-      waiting:  "버튼을 눌러 신청서를 제출하세요",
+      title:       "조기 퇴근 신청서를 작성해주세요",
+      formTitle:   "📄 조기 퇴근 신청서",
+      nameLabel:   "이름",
+      namePlaceholder:   "이름을 입력하세요",
+      reasonLabel: "조기 퇴근 사유 (15자 이상)",
+      reasonPlaceholder: "조기 퇴근이 필요한 사유를 자세히 적어주세요",
+      minReason:   15,
+      needName:    "이름을 입력해주세요!",
+      needReason:  "사유를 15자 이상 적어주세요!",
+      applyBtn:    "신청하기",
+      retryBtn:    "재신청하기",
+      reviewTitle: "🔍 조기 퇴근 신청서 심사중입니다...",
       steps: [
         "서류 검토 중...",
         "결재 라인 확인 중...",
         "부장님 심기 확인 중...",
         "거의 다 됐어요...",
       ],
-      rejected: "반려되었습니다 ㅠㅠ",
-      approved: "승인! 오늘은 칼퇴하세요 🎉",
-      correct:  "승인! 🎉",
+      rejected:  "반려되었습니다 ㅠㅠ",
+      approved:  "승인! 오늘은 칼퇴하세요 🎉",
+      correct:   "승인! 🎉",
     };
     // ============================================
 
     document.getElementById("title").textContent = TEXT.title;
-    document.getElementById("doc-title").textContent = TEXT.docTitle;
+    document.getElementById("form-title").textContent = TEXT.formTitle;
+    document.getElementById("name-label").textContent = TEXT.nameLabel;
+    document.getElementById("reason-label").textContent = TEXT.reasonLabel;
+    document.getElementById("review-title").textContent = TEXT.reviewTitle;
+
+    const formView = document.getElementById("form-view");
+    const reviewView = document.getElementById("review-view");
+    const nameInput = document.getElementById("name-input");
+    const reasonInput = document.getElementById("reason-input");
+    const charCount = document.getElementById("char-count");
     const statusEl = document.getElementById("status");
     const percentEl = document.getElementById("percent");
     const bar = document.getElementById("bar");
-    const applyBtn = document.getElementById("apply-btn");
-    applyBtn.textContent = TEXT.applyBtn;
-    statusEl.textContent = TEXT.waiting;
+    const actionBtn = document.getElementById("action-btn");
+
+    nameInput.placeholder = TEXT.namePlaceholder;
+    reasonInput.placeholder = TEXT.reasonPlaceholder;
+    actionBtn.textContent = TEXT.applyBtn;
+
+    function updateCount() {
+      const len = reasonInput.value.trim().length;
+      charCount.textContent = len + " / " + TEXT.minReason + "자";
+      charCount.classList.toggle("ok", len >= TEXT.minReason);
+    }
+    updateCount();
+    reasonInput.addEventListener("input", updateCount);
 
     let attempt = 0;
     let running = false;
@@ -114,11 +197,31 @@
       statusEl.textContent = TEXT.steps[stepIdx];
     }
 
-    function run() {
+    function startReview() {
       if (running) return;
+
+      // 첫 신청 때만 입력 검증
+      if (attempt === 0) {
+        if (!nameInput.value.trim()) {
+          showToast(TEXT.needName);
+          nameInput.focus();
+          return;
+        }
+        if (reasonInput.value.trim().length < TEXT.minReason) {
+          showToast(TEXT.needReason);
+          reasonInput.focus();
+          return;
+        }
+        // 신청서 → 심사 화면 전환
+        formView.style.display = "none";
+        reviewView.style.display = "block";
+        document.getElementById("review-title").textContent =
+          "🔍 " + nameInput.value.trim() + "님의 " + TEXT.reviewTitle.replace("🔍 ", "");
+      }
+
       running = true;
       attempt++;
-      applyBtn.disabled = true;
+      actionBtn.disabled = true;
       bar.classList.remove("fail", "pass");
       statusEl.classList.remove("fail", "pass");
       let p = 0;
@@ -135,8 +238,8 @@
               bar.classList.add("fail");
               statusEl.classList.add("fail");
               statusEl.textContent = TEXT.rejected;
-              applyBtn.textContent = TEXT.retryBtn;
-              applyBtn.disabled = false;
+              actionBtn.textContent = TEXT.retryBtn;
+              actionBtn.disabled = false;
               running = false;
             }, 1600);
             return;
@@ -148,14 +251,13 @@
         const timer = setInterval(() => {
           p += 4 + Math.random() * 5;
           if (p >= 100) {
-            p = 100;
             clearInterval(timer);
             bar.style.width = "100%";
             percentEl.textContent = "100%";
             bar.classList.add("pass");
             statusEl.classList.add("pass");
             statusEl.textContent = TEXT.approved;
-            applyBtn.style.display = "none";
+            actionBtn.style.display = "none";
             fireworks();
             showCongrats(TEXT.correct);
             stageComplete(STAGE_N);
@@ -166,7 +268,7 @@
       }
     }
 
-    applyBtn.addEventListener("click", run);
+    actionBtn.addEventListener("click", startReview);
   </script>
 </body>
 </html>
