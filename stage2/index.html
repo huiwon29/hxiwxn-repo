@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>도망가는 버튼</title>
+  <link rel="stylesheet" href="../assets/common.css" />
+  <style>
+    .choice-row { display: flex; gap: 14px; }
+    .choice-row .btn { flex: 1; }
+    #no-btn { transition: left 0.15s ease-out, top 0.15s ease-out, transform 0.15s ease-out; z-index: 500; }
+    #yes-btn.correct { background: #e8632c; color: #fff; animation: pop 0.45s ease; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="congrats"></div>
+    <h1 id="title"></h1>
+    <div class="choice-row">
+      <button class="btn" id="yes-btn"></button>
+      <button class="btn" id="no-btn"></button>
+    </div>
+  </div>
+
+  <script src="../assets/config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    const STAGE_N = 2;
+    initStage(STAGE_N);
+
+    // ===== 문구 설정: 여기만 수정하면 됩니다 =====
+    const TEXT = {
+      title:   "오늘도 야근... 함께 해주실 거죠?",
+      yes:     "네",
+      no:      "아니오",
+      tease1:  "어딜 도망가세요? 😏",
+      tease2:  "포기하면 편해요...",
+      correct: "역시! 🎉",
+    };
+    // ============================================
+
+    document.getElementById("title").textContent = TEXT.title;
+    const yesBtn = document.getElementById("yes-btn");
+    const noBtn = document.getElementById("no-btn");
+    yesBtn.textContent = TEXT.yes;
+    noBtn.textContent = TEXT.no;
+
+    let dodges = 0;
+    let done = false;
+
+    function dodge() {
+      if (done) return;
+      // 처음 도망갈 때 현재 위치 그대로 fixed로 전환 (순간이동 방지)
+      if (noBtn.style.position !== "fixed") {
+        const rect = noBtn.getBoundingClientRect();
+        noBtn.style.transition = "none";
+        noBtn.style.position = "fixed";
+        noBtn.style.left = rect.left + "px";
+        noBtn.style.top = rect.top + "px";
+        noBtn.style.width = rect.width + "px";
+        void noBtn.offsetWidth;
+        noBtn.style.transition = "";
+      }
+      dodges++;
+      const pad = 16;
+      const bw = noBtn.offsetWidth;
+      const bh = noBtn.offsetHeight;
+      const x = pad + Math.random() * Math.max(1, window.innerWidth - bw - pad * 2);
+      const y = pad + Math.random() * Math.max(1, window.innerHeight - bh - pad * 2);
+      noBtn.style.left = x + "px";
+      noBtn.style.top = y + "px";
+      // 6번 넘게 도망가면 점점 작아짐
+      if (dodges > 6) {
+        const scale = Math.max(0.4, 1 - (dodges - 6) * 0.12);
+        noBtn.style.transform = "scale(" + scale + ")";
+      }
+      if (dodges === 3) showToast(TEXT.tease1);
+      if (dodges === 9) showToast(TEXT.tease2);
+    }
+
+    noBtn.addEventListener("touchstart", e => { e.preventDefault(); dodge(); }, { passive: false });
+    noBtn.addEventListener("mouseenter", dodge);
+    noBtn.addEventListener("click", e => { e.preventDefault(); dodge(); });
+
+    yesBtn.addEventListener("click", () => {
+      if (done) return;
+      done = true;
+      yesBtn.classList.add("correct");
+      noBtn.style.display = "none";
+      fireworks();
+      showCongrats(TEXT.correct);
+      stageComplete(STAGE_N);
+    });
+  </script>
+</body>
+</html>

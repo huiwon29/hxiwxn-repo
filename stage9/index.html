@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>마지막 카운트다운</title>
+  <link rel="stylesheet" href="../assets/common.css" />
+  <style>
+    #count {
+      font-size: 7rem;
+      font-weight: 800;
+      text-align: center;
+      color: #e8632c;
+      font-variant-numeric: tabular-nums;
+      margin-bottom: 16px;
+      min-height: 1.2em;
+      line-height: 1.2;
+    }
+    #count.tick { animation: pop 0.4s ease; }
+    #final {
+      text-align: center;
+      font-size: 1.3rem;
+      font-weight: 800;
+      line-height: 1.6;
+      word-break: keep-all;
+      white-space: pre-line;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 1.2, 0.4, 1);
+    }
+    #final.show { opacity: 1; transform: translateY(0); }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="congrats"></div>
+    <h1 id="title"></h1>
+    <div id="count"></div>
+    <div id="final"></div>
+  </div>
+
+  <script src="../assets/config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    const STAGE_N = 9;
+    initStage(STAGE_N);
+
+    // ===== 문구 설정: 여기만 수정하면 됩니다 =====
+    const TEXT = {
+      title:   "마지막 스테이지! 카운트다운이 시작됩니다",
+      from:    10,        // 카운트다운 시작 숫자
+      zero:    "🎆",
+      final:   "축하합니다!\n모든 스테이지를 클리어했어요 🎉",
+      correct: "올 클리어! 🎉",
+    };
+    // ============================================
+
+    document.getElementById("title").textContent = TEXT.title;
+    const countEl = document.getElementById("count");
+    let n = TEXT.from;
+
+    function tick() {
+      countEl.textContent = n;
+      countEl.classList.remove("tick");
+      void countEl.offsetWidth;
+      countEl.classList.add("tick");
+      if (n === 0) {
+        countEl.textContent = TEXT.zero;
+        grandFinale();
+        showCongrats(TEXT.correct);
+        const finalEl = document.getElementById("final");
+        finalEl.textContent = TEXT.final;
+        finalEl.classList.add("show");
+        stageComplete(STAGE_N);
+        return;
+      }
+      n--;
+      setTimeout(tick, 1000);
+    }
+
+    setTimeout(tick, 800);
+  </script>
+</body>
+</html>

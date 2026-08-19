@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>퇴근 시간 퀴즈</title>
+  <link rel="stylesheet" href="../assets/common.css" />
+  <style>
+    .buttons { display: flex; flex-direction: column; gap: 14px; }
+    .time-btn.correct { background: #e8632c; color: #fff; animation: pop 0.45s ease; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="congrats"></div>
+    <h1 id="title"></h1>
+    <div class="buttons">
+      <button class="btn time-btn" data-key="toast6">오후 6시</button>
+      <button class="btn time-btn" data-key="toast7">오후 7시</button>
+      <button class="btn time-btn" data-key="toast8">오후 8시</button>
+      <button class="btn time-btn" data-key="correct">오후 9시</button>
+    </div>
+  </div>
+
+  <script src="../assets/config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    const STAGE_N = 1;
+    initStage(STAGE_N);
+
+    // ===== 문구 설정: 여기만 수정하면 됩니다 =====
+    const TEXT = {
+      title:   "오늘은 몇시에 퇴근할 것 같나요?",
+      toast6:  "그 시간에 퇴근하기엔 너무 일러요. ㅠㅠ",
+      toast7:  "그 시간에 퇴근하기엔 너무 일러요. ㅠㅠ",
+      toast8:  "그 시간에 퇴근하기엔 너무 일러요. ㅠㅠ",
+      correct: "정답! 🎉",
+    };
+    // ============================================
+
+    document.getElementById("title").textContent = TEXT.title;
+
+    document.querySelectorAll(".time-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const key = btn.dataset.key;
+        if (key === "correct") {
+          btn.classList.remove("correct");
+          void btn.offsetWidth;
+          btn.classList.add("correct");
+          fireworks();
+          showCongrats(TEXT.correct);
+          stageComplete(STAGE_N);
+        } else {
+          showToast(TEXT[key]);
+        }
+      });
+    });
+  </script>
+</body>
+</html>

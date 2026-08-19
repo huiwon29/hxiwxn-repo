@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>조기 퇴근 심사</title>
+  <link rel="stylesheet" href="../assets/common.css" />
+  <style>
+    .doc {
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 24px;
+      box-shadow: 0 2px 8px rgba(38, 34, 27, 0.08);
+      margin-bottom: 20px;
+    }
+    .doc-title {
+      font-size: 1.05rem;
+      font-weight: 700;
+      text-align: center;
+      margin-bottom: 20px;
+      padding-bottom: 14px;
+      border-bottom: 2px solid #f0ece3;
+      word-break: keep-all;
+    }
+    .bar-track {
+      height: 18px;
+      background: #f0ece3;
+      border-radius: 999px;
+      overflow: hidden;
+      margin-bottom: 12px;
+    }
+    #bar {
+      height: 100%;
+      width: 0%;
+      background: #e8632c;
+      border-radius: 999px;
+      transition: width 0.3s ease, background 0.3s ease;
+    }
+    #bar.fail { background: #c0392b; }
+    #bar.pass { background: #4d9d6a; }
+    #percent {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      margin-bottom: 8px;
+      font-variant-numeric: tabular-nums;
+    }
+    #status {
+      text-align: center;
+      color: #8a8375;
+      font-size: 0.95rem;
+      min-height: 1.5em;
+      word-break: keep-all;
+    }
+    #status.fail { color: #c0392b; font-weight: 700; }
+    #status.pass { color: #3c8659; font-weight: 700; }
+    #apply-btn { width: 100%; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="congrats"></div>
+    <h1 id="title"></h1>
+    <div class="doc">
+      <div class="doc-title" id="doc-title"></div>
+      <div class="bar-track"><div id="bar"></div></div>
+      <div id="percent">0%</div>
+      <div id="status"></div>
+    </div>
+    <button class="btn primary" id="apply-btn"></button>
+  </div>
+
+  <script src="../assets/config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    const STAGE_N = 5;
+    initStage(STAGE_N);
+
+    // ===== 문구 설정: 여기만 수정하면 됩니다 =====
+    const TEXT = {
+      title:    "조기 퇴근 신청서를 제출해볼까요?",
+      docTitle: "📄 조기 퇴근 신청서 심사",
+      applyBtn: "신청하기",
+      retryBtn: "재신청하기",
+      waiting:  "버튼을 눌러 신청서를 제출하세요",
+      steps: [
+        "서류 검토 중...",
+        "결재 라인 확인 중...",
+        "부장님 심기 확인 중...",
+        "거의 다 됐어요...",
+      ],
+      rejected: "반려되었습니다 ㅠㅠ",
+      approved: "승인! 오늘은 칼퇴하세요 🎉",
+      correct:  "승인! 🎉",
+    };
+    // ============================================
+
+    document.getElementById("title").textContent = TEXT.title;
+    document.getElementById("doc-title").textContent = TEXT.docTitle;
+    const statusEl = document.getElementById("status");
+    const percentEl = document.getElementById("percent");
+    const bar = document.getElementById("bar");
+    const applyBtn = document.getElementById("apply-btn");
+    applyBtn.textContent = TEXT.applyBtn;
+    statusEl.textContent = TEXT.waiting;
+
+    let attempt = 0;
+    let running = false;
+
+    function setProgress(p) {
+      bar.style.width = p + "%";
+      percentEl.textContent = Math.floor(p) + "%";
+      const stepIdx = Math.min(TEXT.steps.length - 1, Math.floor(p / (100 / TEXT.steps.length)));
+      statusEl.textContent = TEXT.steps[stepIdx];
+    }
+
+    function run() {
+      if (running) return;
+      running = true;
+      attempt++;
+      applyBtn.disabled = true;
+      bar.classList.remove("fail", "pass");
+      statusEl.classList.remove("fail", "pass");
+      let p = 0;
+
+      if (attempt === 1) {
+        // 1차: 천천히 차다가 99%에서 반려
+        const timer = setInterval(() => {
+          p += p < 70 ? 1.2 + Math.random() * 1.8 : 0.4 + Math.random() * 0.7;
+          if (p >= 99) {
+            p = 99;
+            clearInterval(timer);
+            setProgress(99);
+            setTimeout(() => {
+              bar.classList.add("fail");
+              statusEl.classList.add("fail");
+              statusEl.textContent = TEXT.rejected;
+              applyBtn.textContent = TEXT.retryBtn;
+              applyBtn.disabled = false;
+              running = false;
+            }, 1600);
+            return;
+          }
+          setProgress(p);
+        }, 80);
+      } else {
+        // 2차: 빠르게 100% 승인
+        const timer = setInterval(() => {
+          p += 4 + Math.random() * 5;
+          if (p >= 100) {
+            p = 100;
+            clearInterval(timer);
+            bar.style.width = "100%";
+            percentEl.textContent = "100%";
+            bar.classList.add("pass");
+            statusEl.classList.add("pass");
+            statusEl.textContent = TEXT.approved;
+            applyBtn.style.display = "none";
+            fireworks();
+            showCongrats(TEXT.correct);
+            stageComplete(STAGE_N);
+            return;
+          }
+          setProgress(p);
+        }, 60);
+      }
+    }
+
+    applyBtn.addEventListener("click", run);
+  </script>
+</body>
+</html>

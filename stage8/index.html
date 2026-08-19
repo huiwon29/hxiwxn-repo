@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>3초 챌린지</title>
+  <link rel="stylesheet" href="../assets/common.css" />
+  <style>
+    .ring-wrap {
+      position: relative;
+      width: 220px;
+      height: 220px;
+      margin: 0 auto 24px;
+      touch-action: none;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      -webkit-tap-highlight-color: transparent;
+      cursor: pointer;
+    }
+    .ring-wrap svg { transform: rotate(-90deg); }
+    .ring-bg { fill: #fff; stroke: #efece4; stroke-width: 14; }
+    #ring-fill {
+      fill: none;
+      stroke: #e8632c;
+      stroke-width: 14;
+      stroke-linecap: round;
+    }
+    #ring-label {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.5rem;
+      font-weight: 800;
+      pointer-events: none;
+      word-break: keep-all;
+      text-align: center;
+    }
+    .hint {
+      text-align: center;
+      color: #8a8375;
+      font-size: 0.9rem;
+      word-break: keep-all;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="congrats"></div>
+    <h1 id="title"></h1>
+    <div class="ring-wrap" id="ring-wrap">
+      <svg width="220" height="220" viewBox="0 0 220 220">
+        <circle class="ring-bg" cx="110" cy="110" r="96"></circle>
+        <circle id="ring-fill" cx="110" cy="110" r="96"></circle>
+      </svg>
+      <div id="ring-label"></div>
+    </div>
+    <p class="hint" id="hint"></p>
+  </div>
+
+  <script src="../assets/config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    const STAGE_N = 8;
+    initStage(STAGE_N);
+
+    // ===== 문구 설정: 여기만 수정하면 됩니다 =====
+    const TEXT = {
+      title:     "3초 동안 꾹 눌러보세요!",
+      idleLabel: "꾹!",
+      hint:      "가운데 원을 3초 동안 떼지 말고 누르고 있으세요",
+      dropped:   "앗! 손을 떼면 안 돼요 😱",
+      success:   "성공!",
+      correct:   "성공! 🎉",
+      holdMs:    3000,   // 버텨야 하는 시간 (밀리초)
+    };
+    // ============================================
+
+    document.getElementById("title").textContent = TEXT.title;
+    document.getElementById("hint").textContent = TEXT.hint;
+    const label = document.getElementById("ring-label");
+    label.textContent = TEXT.idleLabel;
+
+    const wrap = document.getElementById("ring-wrap");
+    const fill = document.getElementById("ring-fill");
+    const CIRC = 2 * Math.PI * 96;
+    fill.style.strokeDasharray = CIRC;
+    fill.style.strokeDashoffset = CIRC;
+
+    let holding = false;
+    let done = false;
+    let startTime = 0;
+    let rafId = null;
+
+    function setRatio(r) {
+      fill.style.strokeDashoffset = CIRC * (1 - r);
+    }
+
+    function frame(now) {
+      if (!holding || done) return;
+      const ratio = Math.min(1, (now - startTime) / TEXT.holdMs);
+      setRatio(ratio);
+      label.textContent = ratio < 1 ? Math.ceil((TEXT.holdMs / 1000) * (1 - ratio)) : TEXT.success;
+      if (ratio >= 1) {
+        done = true;
+        holding = false;
+        fireworks();
+        showCongrats(TEXT.correct);
+        stageComplete(STAGE_N);
+        return;
+      }
+      rafId = requestAnimationFrame(frame);
+    }
+
+    wrap.addEventListener("pointerdown", e => {
+      if (done) return;
+      e.preventDefault();
+      wrap.setPointerCapture(e.pointerId);
+      holding = true;
+      startTime = performance.now();
+      rafId = requestAnimationFrame(frame);
+    });
+
+    function drop() {
+      if (!holding || done) return;
+      holding = false;
+      cancelAnimationFrame(rafId);
+      setRatio(0);
+      label.textContent = TEXT.idleLabel;
+      showToast(TEXT.dropped);
+    }
+
+    wrap.addEventListener("pointerup", drop);
+    wrap.addEventListener("pointercancel", drop);
+    wrap.addEventListener("contextmenu", e => e.preventDefault());
+  </script>
+</body>
+</html>

@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>선물 상자</title>
+  <link rel="stylesheet" href="../assets/common.css" />
+  <style>
+    #box {
+      font-size: 7rem;
+      text-align: center;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-tap-highlight-color: transparent;
+      margin-bottom: 24px;
+    }
+    @keyframes wiggle-small {
+      0%, 100% { transform: rotate(0); }
+      25% { transform: rotate(-6deg); }
+      75% { transform: rotate(6deg); }
+    }
+    @keyframes wiggle-big {
+      0%, 100% { transform: rotate(0) scale(1); }
+      20% { transform: rotate(-12deg) scale(1.06); }
+      50% { transform: rotate(12deg) scale(1.1); }
+      80% { transform: rotate(-8deg) scale(1.04); }
+    }
+    #box.wiggle1 { animation: wiggle-small 0.4s ease; }
+    #box.wiggle2 { animation: wiggle-big 0.5s ease; }
+    #box.opened { animation: pop 0.5s ease; cursor: default; }
+    #secret {
+      text-align: center;
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #e8632c;
+      line-height: 1.6;
+      word-break: keep-all;
+      opacity: 0;
+      transform: translateY(12px);
+      transition: opacity 0.5s ease, transform 0.5s cubic-bezier(0.2, 1.2, 0.4, 1);
+      min-height: 2em;
+    }
+    #secret.show { opacity: 1; transform: translateY(0); }
+    .hint {
+      text-align: center;
+      color: #8a8375;
+      font-size: 0.9rem;
+      margin-top: 16px;
+      word-break: keep-all;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="congrats"></div>
+    <h1 id="title"></h1>
+    <div id="box">🎁</div>
+    <div id="secret"></div>
+    <p class="hint" id="hint"></p>
+  </div>
+
+  <script src="../assets/config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    const STAGE_N = 6;
+    initStage(STAGE_N);
+
+    // ===== 문구 설정: 여기만 수정하면 됩니다 =====
+    const TEXT = {
+      title:    "선물이 도착했어요!",
+      hint:     "상자를 톡톡 두드려보세요",
+      knock1:   "🤫 뭔가 들어있는 것 같아요...",
+      knock2:   "한 번만 더!",
+      openEmoji: "🎊",
+      secret:   "서프라이즈 메시지를 여기에 적어주세요 💌",
+      correct:  "🎊 짜잔!",
+    };
+    // ============================================
+
+    document.getElementById("title").textContent = TEXT.title;
+    document.getElementById("hint").textContent = TEXT.hint;
+
+    const box = document.getElementById("box");
+    let taps = 0;
+
+    box.addEventListener("click", () => {
+      if (taps >= 3) return;
+      taps++;
+      box.classList.remove("wiggle1", "wiggle2");
+      void box.offsetWidth;
+      if (taps === 1) {
+        box.classList.add("wiggle1");
+        showToast(TEXT.knock1);
+      } else if (taps === 2) {
+        box.classList.add("wiggle2");
+        showToast(TEXT.knock2);
+      } else {
+        box.textContent = TEXT.openEmoji;
+        box.classList.add("opened");
+        document.getElementById("secret").textContent = TEXT.secret;
+        document.getElementById("secret").classList.add("show");
+        document.getElementById("hint").style.display = "none";
+        fireworks();
+        showCongrats(TEXT.correct);
+        stageComplete(STAGE_N);
+      }
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>스피드 퀴즈</title>
+  <link rel="stylesheet" href="../assets/common.css" />
+  <style>
+    .progress-label {
+      text-align: center;
+      color: #8a8375;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 16px;
+    }
+    .question {
+      background: #fff;
+      border-radius: 16px;
+      padding: 24px 20px;
+      box-shadow: 0 2px 8px rgba(38, 34, 27, 0.08);
+      font-size: 1.15rem;
+      font-weight: 700;
+      text-align: center;
+      line-height: 1.5;
+      word-break: keep-all;
+      margin-bottom: 20px;
+      min-height: 5em;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .choices { display: flex; flex-direction: column; gap: 12px; }
+    .choices .btn { min-height: 54px; font-size: 1.05rem; }
+    .choices .btn.wrong { animation: shake 0.4s ease; }
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-8px); }
+      50% { transform: translateX(8px); }
+      75% { transform: translateX(-5px); }
+    }
+    #done {
+      display: none;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: #e8632c;
+      word-break: keep-all;
+      white-space: pre-line;
+      line-height: 1.6;
+    }
+    #done.show { display: block; animation: pop 0.5s ease; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div id="congrats"></div>
+    <h1 id="title"></h1>
+    <div id="quiz">
+      <div class="progress-label" id="progress"></div>
+      <div class="question" id="question"></div>
+      <div class="choices" id="choices"></div>
+    </div>
+    <div id="done"></div>
+  </div>
+
+  <script src="../assets/config.js"></script>
+  <script src="../assets/common.js"></script>
+  <script>
+    const STAGE_N = 7;
+    initStage(STAGE_N);
+
+    // ===== 문구 설정: 여기만 수정하면 됩니다 =====
+    // questions: 문제/보기/정답(0부터 세는 보기 번호)을 자유롭게 수정·추가하세요
+    const TEXT = {
+      title:   "나에 대해 얼마나 알고 있나요?",
+      wrong:   "땡! 다시 생각해보세요 🤔",
+      right:   "정답! 👏",
+      done:    "모든 문제 정답!\n당신은 나를 너무 잘 아는군요 🎉",
+      correct: "올 정답! 🎉",
+      questions: [
+        { q: "1번 문제를 여기에 적어주세요", choices: ["보기 1", "보기 2", "보기 3", "보기 4"], answer: 0 },
+        { q: "2번 문제를 여기에 적어주세요", choices: ["보기 1", "보기 2", "보기 3", "보기 4"], answer: 1 },
+        { q: "3번 문제를 여기에 적어주세요", choices: ["보기 1", "보기 2", "보기 3", "보기 4"], answer: 2 },
+      ],
+    };
+    // ============================================
+
+    document.getElementById("title").textContent = TEXT.title;
+    const progressEl = document.getElementById("progress");
+    const questionEl = document.getElementById("question");
+    const choicesEl = document.getElementById("choices");
+    let idx = 0;
+
+    function renderQuestion() {
+      const item = TEXT.questions[idx];
+      progressEl.textContent = (idx + 1) + " / " + TEXT.questions.length;
+      questionEl.textContent = item.q;
+      choicesEl.innerHTML = "";
+      item.choices.forEach((choice, i) => {
+        const btn = document.createElement("button");
+        btn.className = "btn";
+        btn.textContent = choice;
+        btn.addEventListener("click", () => {
+          if (i === item.answer) {
+            idx++;
+            if (idx >= TEXT.questions.length) {
+              finish();
+            } else {
+              showToast(TEXT.right);
+              renderQuestion();
+            }
+          } else {
+            btn.classList.remove("wrong");
+            void btn.offsetWidth;
+            btn.classList.add("wrong");
+            showToast(TEXT.wrong);
+          }
+        });
+        choicesEl.appendChild(btn);
+      });
+    }
+
+    function finish() {
+      document.getElementById("quiz").style.display = "none";
+      const done = document.getElementById("done");
+      done.textContent = TEXT.done;
+      done.classList.add("show");
+      fireworks();
+      showCongrats(TEXT.correct);
+      stageComplete(STAGE_N);
+    }
+
+    renderQuestion();
+  </script>
+</body>
+</html>

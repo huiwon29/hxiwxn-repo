@@ -3,281 +3,327 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
-  <title>오늘은 몇시에 퇴근할 것 같나요?</title>
+  <title>시크릿 게임 코스</title>
   <!-- 카톡 링크 미리보기 -->
-  <meta property="og:title" content="오늘은 몇시에 퇴근할 것 같나요?" />
-  <meta property="og:description" content="버튼을 눌러 정답을 맞혀보세요!" />
+  <meta property="og:title" content="시크릿 게임 코스" />
+  <meta property="og:description" content="매일 하나씩, 비밀번호로 스테이지를 열어보세요!" />
+  <link rel="stylesheet" href="assets/common.css" />
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    .container { justify-content: flex-start; padding-top: 48px; }
 
-    html, body {
-      height: 100%;
-    }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Pretendard", "Noto Sans KR", sans-serif;
-      background: #f6f4ef;
-      color: #26221b;
-      display: flex;
-      justify-content: center;
-    }
-
-    .container {
-      width: 100%;
-      max-width: 420px;
-      min-height: 100%;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      padding: 32px 24px 48px;
-    }
-
-    h1 {
-      font-size: 1.6rem;
-      line-height: 1.4;
+    .subtitle {
       text-align: center;
-      margin-bottom: 40px;
-      word-break: keep-all;
-    }
-
-    .buttons {
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-    }
-
-    .time-btn {
-      height: 60px;
-      border: none;
-      border-radius: 16px;
-      background: #ffffff;
-      color: #26221b;
-      font-size: 1.15rem;
-      font-weight: 600;
-      font-family: inherit;
-      box-shadow: 0 2px 8px rgba(38, 34, 27, 0.08);
-      cursor: pointer;
-      transition: transform 0.1s ease, background 0.2s ease, color 0.2s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    .time-btn:active {
-      transform: scale(0.97);
-    }
-
-    .time-btn.correct {
-      background: #e8632c;
-      color: #ffffff;
-      animation: pop 0.45s ease;
-    }
-
-    @keyframes pop {
-      0%   { transform: scale(1); }
-      40%  { transform: scale(1.08); }
-      100% { transform: scale(1); }
-    }
-
-    /* 토스트 */
-    #toast {
-      position: fixed;
-      left: 50%;
-      bottom: 48px;
-      transform: translate(-50%, 20px);
-      max-width: calc(100% - 48px);
-      background: rgba(38, 34, 27, 0.92);
-      color: #fff;
+      color: #8a8375;
       font-size: 0.95rem;
-      line-height: 1.5;
-      padding: 13px 22px;
-      border-radius: 999px;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.25s ease, transform 0.25s ease;
-      text-align: center;
+      margin: -28px 0 32px;
       word-break: keep-all;
     }
 
-    #toast.show {
-      opacity: 1;
-      transform: translate(-50%, 0);
+    /* 전체 클리어 배너 */
+    #all-clear {
+      display: none;
+      background: #e8632c;
+      color: #fff;
+      border-radius: 16px;
+      padding: 16px 20px;
+      text-align: center;
+      font-weight: 700;
+      font-size: 1.05rem;
+      margin-bottom: 28px;
+      box-shadow: 0 6px 18px rgba(232, 99, 44, 0.3);
+      word-break: keep-all;
+    }
+    #all-clear.show { display: block; animation: pop 0.45s ease; }
+
+    /* 스테이지 타임라인 */
+    .stage-list { list-style: none; display: flex; flex-direction: column; }
+
+    .stage-item {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      padding: 9px 0;
+      position: relative;
+    }
+    .stage-item:not(:last-child)::after {
+      content: "";
+      position: absolute;
+      left: 26px;
+      top: calc(50% + 32px);
+      height: calc(100% - 46px);
+      width: 2px;
+      background: #e3ddd2;
     }
 
-    /* 정답 축하 문구: 제목 위 전용 공간 */
-    #congrats {
-      height: 3rem;
+    .stage-node {
+      width: 54px;
+      height: 54px;
+      border-radius: 50%;
+      background: #fff;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 2rem;
-      font-weight: 800;
-      color: #e8632c;
-      opacity: 0;
-      transform: scale(0.6);
-      transition: opacity 0.3s ease, transform 0.3s cubic-bezier(0.2, 1.4, 0.4, 1);
-      text-shadow: 0 2px 12px rgba(232, 99, 44, 0.25);
-      margin-bottom: 12px;
+      font-size: 1.5rem;
+      box-shadow: 0 2px 8px rgba(38, 34, 27, 0.08);
+      flex-shrink: 0;
+      z-index: 1;
     }
 
-    #congrats.show {
-      opacity: 1;
-      transform: scale(1);
+    .stage-card {
+      flex: 1;
+      background: #fff;
+      border: none;
+      border-radius: 14px;
+      padding: 13px 16px;
+      box-shadow: 0 2px 8px rgba(38, 34, 27, 0.08);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 1rem;
+      color: inherit;
+      text-align: left;
+      transition: transform 0.1s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .stage-card:active { transform: scale(0.97); }
+
+    .stage-name { font-weight: 600; word-break: keep-all; }
+
+    .stage-badge {
+      font-size: 0.8rem;
+      font-weight: 600;
+      padding: 5px 10px;
+      border-radius: 999px;
+      flex-shrink: 0;
+      white-space: nowrap;
     }
 
-    /* 폭죽 캔버스 */
-    #confetti {
+    .stage-item.locked .stage-node { filter: grayscale(1); opacity: 0.55; }
+    .stage-item.locked .stage-name { color: #a29a8a; }
+    .stage-item.locked .stage-badge { background: #efece4; color: #a29a8a; }
+
+    .stage-item.open .stage-badge { background: #fdeadf; color: #e8632c; }
+
+    .stage-item.cleared .stage-badge { background: #e4f2e9; color: #3c8659; }
+    .stage-item.cleared .stage-card { box-shadow: inset 0 0 0 2px #bfe0cc, 0 2px 8px rgba(38, 34, 27, 0.06); }
+
+    .reset-link {
+      margin-top: 36px;
+      text-align: center;
+      font-size: 0.85rem;
+      color: #b3ac9d;
+      text-decoration: underline;
+      cursor: pointer;
+      background: none;
+      border: none;
+      font-family: inherit;
+    }
+
+    /* 비밀번호 모달 */
+    #modal-overlay {
       position: fixed;
       inset: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
+      background: rgba(38, 34, 27, 0.5);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      z-index: 800;
     }
+    #modal-overlay.show { display: flex; }
+
+    .modal {
+      width: 100%;
+      max-width: 340px;
+      background: #fff;
+      border-radius: 20px;
+      padding: 28px 24px 24px;
+      text-align: center;
+      box-shadow: 0 12px 40px rgba(38, 34, 27, 0.25);
+    }
+    .modal.shake { animation: shake 0.4s ease; }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      20% { transform: translateX(-10px); }
+      40% { transform: translateX(10px); }
+      60% { transform: translateX(-7px); }
+      80% { transform: translateX(7px); }
+    }
+
+    .modal .modal-emoji { font-size: 2.4rem; margin-bottom: 8px; }
+    .modal h2 { font-size: 1.15rem; margin-bottom: 4px; word-break: keep-all; }
+    .modal p { font-size: 0.9rem; color: #8a8375; margin-bottom: 18px; word-break: keep-all; }
+
+    .modal input {
+      width: 100%;
+      height: 52px;
+      border: 2px solid #e3ddd2;
+      border-radius: 12px;
+      font-size: 1.2rem;
+      font-family: inherit;
+      text-align: center;
+      outline: none;
+      margin-bottom: 14px;
+    }
+    .modal input:focus { border-color: #e8632c; }
+
+    .modal-buttons { display: flex; gap: 10px; }
+    .modal-buttons .btn { flex: 1; min-height: 50px; font-size: 1rem; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div id="congrats"></div>
     <h1 id="title"></h1>
-    <div class="buttons">
-      <button class="time-btn" data-key="toast6">오후 6시</button>
-      <button class="time-btn" data-key="toast7">오후 7시</button>
-      <button class="time-btn" data-key="toast8">오후 8시</button>
-      <button class="time-btn" data-key="correct" id="answer-btn">오후 9시</button>
+    <p class="subtitle" id="subtitle"></p>
+    <div id="all-clear"></div>
+    <ol class="stage-list" id="stage-list"></ol>
+    <button class="reset-link" id="reset-btn">처음부터 다시 하기</button>
+  </div>
+
+  <div id="modal-overlay">
+    <div class="modal" id="modal">
+      <div class="modal-emoji" id="modal-emoji">🔒</div>
+      <h2 id="modal-title"></h2>
+      <p id="modal-desc"></p>
+      <input type="text" id="pw-input" autocomplete="off" autocapitalize="off" placeholder="비밀번호" />
+      <div class="modal-buttons">
+        <button class="btn" id="modal-cancel">취소</button>
+        <button class="btn primary" id="modal-ok">확인</button>
+      </div>
     </div>
   </div>
 
-  <canvas id="confetti"></canvas>
-  <div id="toast"></div>
-
+  <script src="assets/config.js"></script>
+  <script src="assets/common.js"></script>
   <script>
     // ===== 문구 설정: 여기만 수정하면 됩니다 =====
     const TEXT = {
-      title:   "오늘은 몇시에 퇴근할 것 같나요?",
-      toast6:  "그 시간에 퇴근하기엔 너무 일러요. ㅠㅠ",
-      toast7:  "그 시간에 퇴근하기엔 너무 일러요. ㅠㅠ",
-      toast8:  "그 시간에 퇴근하기엔 너무 일러요. ㅠㅠ",
-      correct: "정답! 🎉",
+      title:      "🗺️ 시크릿 게임 코스",
+      subtitle:   "매일 알려주는 비밀번호로 스테이지를 하나씩 열어보세요!",
+      lockedName: "???",                       // 잠긴 스테이지 이름 표시
+      badgeLocked:  "🔒 잠김",
+      badgeOpen:    "플레이 →",
+      badgeCleared: "클리어 ✔️",
+      modalTitle:   "비밀 스테이지",
+      modalDesc:    "비밀번호를 입력하면 게임이 열려요",
+      wrongPw:      "비밀번호가 틀렸어요! 🙅",
+      unlocked:     "잠금 해제! 게임으로 이동합니다 🎉",
+      allClear:     "🎊 모든 스테이지 클리어! 축하합니다 🎊",
+      resetConfirm: "정말 모든 진행 상황을 초기화할까요?",
     };
     // ============================================
 
     document.getElementById("title").textContent = TEXT.title;
+    document.getElementById("subtitle").textContent = TEXT.subtitle;
 
-    // --- 토스트 ---
-    const toast = document.getElementById("toast");
-    let toastTimer = null;
+    const listEl = document.getElementById("stage-list");
+    const overlay = document.getElementById("modal-overlay");
+    const modal = document.getElementById("modal");
+    const pwInput = document.getElementById("pw-input");
+    let modalStage = null;
+    let checking = false;
 
-    function showToast(message) {
-      toast.textContent = message;
-      toast.classList.remove("show");
-      void toast.offsetWidth; // 연타 시 애니메이션 재시작
-      toast.classList.add("show");
-      clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.remove("show"), 2000);
-    }
+    function renderList() {
+      listEl.innerHTML = "";
+      for (const s of STAGES) {
+        const unlocked = Progress.isUnlocked(s.n);
+        const cleared = Progress.isCleared(s.n);
+        const state = cleared ? "cleared" : unlocked ? "open" : "locked";
 
-    // --- 폭죽 ---
-    const canvas = document.getElementById("confetti");
-    const ctx = canvas.getContext("2d");
-    const COLORS = ["#e8632c", "#f4b23e", "#4d9d6a", "#3d7bd9", "#d94f70", "#8a5cc9"];
-    let particles = [];
-    let animating = false;
+        const li = document.createElement("li");
+        li.className = "stage-item " + state;
 
-    function resizeCanvas() {
-      canvas.width = window.innerWidth * devicePixelRatio;
-      canvas.height = window.innerHeight * devicePixelRatio;
-      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
-    }
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
+        const node = document.createElement("div");
+        node.className = "stage-node";
+        node.textContent = unlocked ? s.emoji : "🔒";
 
-    function burst(x, y, count) {
-      for (let i = 0; i < count; i++) {
-        const angle = Math.random() * Math.PI * 2;
-        const speed = 5 + Math.random() * 9;
-        particles.push({
-          x, y,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed - 4,
-          size: 5 + Math.random() * 6,
-          color: COLORS[Math.floor(Math.random() * COLORS.length)],
-          rotation: Math.random() * Math.PI * 2,
-          spin: (Math.random() - 0.5) * 0.3,
-          life: 1,
-          decay: 0.008 + Math.random() * 0.008,
+        const card = document.createElement("button");
+        card.className = "stage-card";
+        card.innerHTML =
+          '<span class="stage-name">' + s.n + ". " + (unlocked ? s.name : TEXT.lockedName) + "</span>" +
+          '<span class="stage-badge">' +
+          (cleared ? TEXT.badgeCleared : unlocked ? TEXT.badgeOpen : TEXT.badgeLocked) +
+          "</span>";
+        card.addEventListener("click", () => {
+          if (unlocked) {
+            location.href = "stage" + s.n + "/";
+          } else {
+            openModal(s);
+          }
         });
-      }
-    }
 
-    function tick() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      ctx.clearRect(0, 0, w, h);
-
-      particles = particles.filter(p => p.life > 0 && p.y < h + 30);
-      for (const p of particles) {
-        p.vy += 0.18;      // 중력
-        p.vx *= 0.985;     // 공기 저항
-        p.x += p.vx;
-        p.y += p.vy;
-        p.rotation += p.spin;
-        p.life -= p.decay;
-
-        ctx.save();
-        ctx.globalAlpha = Math.max(p.life, 0);
-        ctx.translate(p.x, p.y);
-        ctx.rotate(p.rotation);
-        ctx.fillStyle = p.color;
-        ctx.fillRect(-p.size / 2, -p.size / 2, p.size, p.size * 0.6);
-        ctx.restore();
+        li.appendChild(node);
+        li.appendChild(card);
+        listEl.appendChild(li);
       }
 
-      if (particles.length > 0) {
-        requestAnimationFrame(tick);
-      } else {
-        animating = false;
-        ctx.clearRect(0, 0, w, h);
-      }
-    }
-
-    function fireworks() {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      burst(w / 2, h * 0.35, 90);
-      setTimeout(() => burst(w * 0.25, h * 0.3, 60), 220);
-      setTimeout(() => burst(w * 0.75, h * 0.3, 60), 420);
-      if (!animating) {
-        animating = true;
-        requestAnimationFrame(tick);
-      }
-    }
-
-    // --- 축하 문구 ---
-    const congrats = document.getElementById("congrats");
-    let congratsTimer = null;
-
-    function showCongrats() {
-      congrats.textContent = TEXT.correct;
-      congrats.classList.remove("show");
-      void congrats.offsetWidth;
-      congrats.classList.add("show");
-      clearTimeout(congratsTimer);
-      congratsTimer = setTimeout(() => congrats.classList.remove("show"), 2600);
-    }
-
-    // --- 버튼 동작 ---
-    document.querySelectorAll(".time-btn").forEach(btn => {
-      btn.addEventListener("click", () => {
-        const key = btn.dataset.key;
-        if (key === "correct") {
-          btn.classList.remove("correct");
-          void btn.offsetWidth;
-          btn.classList.add("correct");
-          fireworks();
-          showCongrats();
-        } else {
-          showToast(TEXT[key]);
+      const allCleared = STAGES.every(s => Progress.isCleared(s.n));
+      const banner = document.getElementById("all-clear");
+      if (allCleared) {
+        banner.textContent = TEXT.allClear;
+        if (!banner.classList.contains("show")) {
+          banner.classList.add("show");
+          grandFinale();
         }
-      });
+      }
+    }
+
+    function openModal(stage) {
+      modalStage = stage;
+      document.getElementById("modal-title").textContent = TEXT.modalTitle + " " + stage.n;
+      document.getElementById("modal-desc").textContent = TEXT.modalDesc;
+      pwInput.value = "";
+      overlay.classList.add("show");
+      setTimeout(() => pwInput.focus(), 100);
+    }
+
+    function closeModal() {
+      overlay.classList.remove("show");
+      modalStage = null;
+    }
+
+    async function tryUnlock() {
+      if (!modalStage || checking) return;
+      const value = pwInput.value.trim();
+      if (!value) return;
+      checking = true;
+      const hash = await sha256(value);
+      checking = false;
+      if (hash === modalStage.passwordHash) {
+        const n = modalStage.n;
+        Progress.unlock(n);
+        closeModal();
+        fireworks();
+        showToast(TEXT.unlocked);
+        setTimeout(() => { location.href = "stage" + n + "/"; }, 1100);
+      } else {
+        modal.classList.remove("shake");
+        void modal.offsetWidth;
+        modal.classList.add("shake");
+        showToast(TEXT.wrongPw);
+        pwInput.value = "";
+        pwInput.focus();
+      }
+    }
+
+    document.getElementById("modal-ok").addEventListener("click", tryUnlock);
+    pwInput.addEventListener("keydown", e => { if (e.key === "Enter") tryUnlock(); });
+    document.getElementById("modal-cancel").addEventListener("click", closeModal);
+    overlay.addEventListener("click", e => { if (e.target === overlay) closeModal(); });
+
+    document.getElementById("reset-btn").addEventListener("click", () => {
+      if (confirm(TEXT.resetConfirm)) {
+        Progress.reset();
+        renderList();
+        showToast("초기화되었습니다");
+      }
     });
+
+    renderList();
   </script>
 </body>
 </html>
